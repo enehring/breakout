@@ -6,7 +6,8 @@
 #define TITLE "Breakout"
 #define DEFAULT_WINDOW_HEIGHT 800
 #define DEFAULT_WINDOW_WIDTH 800
-#define BLOCK_COUNT 3
+#define BRICK_COUNT 20
+#define BRICK_WIDTH 70
 
 int _window_height = DEFAULT_WINDOW_HEIGHT;
 int _window_width = DEFAULT_WINDOW_WIDTH;
@@ -14,6 +15,7 @@ int _window_width = DEFAULT_WINDOW_WIDTH;
 // TODO: put the game "state" in a struct
 SDL_Rect paddle = {.x = 0, .y = DEFAULT_WINDOW_HEIGHT - 25, .h = 25, .w = 200};
 SDL_Rect projectile = {.x = 0, .y = 20, .h = 50, .w = 50};
+SDL_Rect bricks[BRICK_COUNT];
 int x_direction = 1;
 int y_direction = 1;
 
@@ -106,7 +108,21 @@ static int continue_game(SDL_Window * window, SDL_Renderer * renderer) {
     frame_counter = 0;
   }
 
-  // TODO: draw targets
+  for (int i = 0; i < BRICK_COUNT; i++) {
+    SDL_Rect brick = bricks[i];
+
+    if (SDL_SetRenderDrawColor(renderer,0, 255, 0, 0) < 0) {
+      SDL_Log("Failed to set draw color for brick #%i: %s", i, SDL_GetError());
+    }
+
+    if (SDL_RenderDrawRect(renderer, &brick) < 0) {
+      SDL_Log("Failed to draw brick #%i: %s", i, SDL_GetError());
+    }
+
+    if (SDL_RenderFillRect(renderer, &brick) < 0) {
+      SDL_Log("Failed to fill brick #%i: %s", i, SDL_GetError());
+    }
+  }
 
     // drow projectile
   if (SDL_SetRenderDrawColor(renderer, 255, 0, 0, 0) < 0) {
@@ -138,6 +154,25 @@ static int continue_game(SDL_Window * window, SDL_Renderer * renderer) {
   SDL_RenderPresent(renderer);
   
   return 1;
+}
+
+static void init_bricks() {
+  int next_brick_x = 0;
+  int next_brick_y = 0;
+
+  for (int i = 0; i < BRICK_COUNT; i++) {
+    bricks[i].x = next_brick_x;
+    bricks[i].y = next_brick_y;
+    bricks[i].h = 25;
+    bricks[i].w = BRICK_WIDTH;
+
+    next_brick_x = next_brick_x + BRICK_WIDTH + 10;
+    next_brick_y = next_brick_y + (((next_brick_x + BRICK_WIDTH) / _window_width) * 35);
+
+    if (bricks[i].y < next_brick_y) {
+      next_brick_x = 0;
+    }
+  }
 }
 
 static SDL_Window * init_window() {
@@ -176,6 +211,7 @@ int main(int argc, char ** argv) {
     return 1;
   }
 
+  init_bricks();
   // game loop
   while (continue_game(window, renderer)) { }
 
