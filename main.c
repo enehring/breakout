@@ -150,40 +150,41 @@ static SDL_Window * init_window() {
 int main(int argc, char ** argv) {
   SDL_Window * window;
   SDL_Renderer * renderer;
+  int error = 0;
 
   if (SDL_Init(SDL_INIT_VIDEO) < 0) {
     SDL_Log("Could not initialize SDL: %s", SDL_GetError());
-    SDL_Quit();
-    return 1;
+    error = 1;
+    goto QUIT;
   }
 
   window = init_window();
 
   if (!window) {
     SDL_Log("Could not create SDL window: %s", SDL_GetError());
-    SDL_QuitSubSystem(SDL_INIT_VIDEO);
-    SDL_Quit();
-    return 1;
+    error = 1;
+    goto QUIT_VIDEO;
   }
 
   renderer = SDL_CreateRenderer(window, -1, 0);
 
   if (!renderer) {
     SDL_Log("Could not create SDL renderer: %s", SDL_GetError());
-    SDL_DestroyWindow(window);
-    SDL_QuitSubSystem(SDL_INIT_VIDEO);
-    SDL_Quit();
-    return 1;
+    error = 1;
+    goto CLEANUP_WINDOW;
   }
 
   // game loop
   while (continue_game(window, renderer)) { }
 
   SDL_DestroyRenderer(renderer);
+  CLEANUP_WINDOW:
   SDL_DestroyWindow(window);
+  QUIT_VIDEO:
   SDL_QuitSubSystem(SDL_INIT_VIDEO);
+  QUIT:
   SDL_Quit();
 
-  return 0;
+  return error;
 }
 
